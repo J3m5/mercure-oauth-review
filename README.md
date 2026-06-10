@@ -19,3 +19,4 @@ This repository stores review artifacts for the Mercure OAuth 2.0 authorization 
 - `review/mercure-oauth-review-matrix.md`
 - `review/mercure-oauth-review-commands.md`
 - `review/mercure-oauth-review-summary.md`
+- `review/mercure-oauth-review-plan.md`
