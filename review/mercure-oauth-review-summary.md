@@ -12,6 +12,13 @@ Follow-up comparison after maintainer pushes on 2026-06-10:
 - #1269 matchers: `e781ad9` (`fix(subscriptions): emit RFC 9110-quoted ETags`)
 - #1273 OAuth: `edfaa64` (`fix(authz): match the Bearer scheme case-insensitively`)
 
+Final spec-grounded review:
+
+- Date: 2026-06-10
+- OAuth worktree: `mercure-feat-oauth-authz` at `edfaa64`
+- Spec worktree: `mercure` / `spec/oauth-authz` at `a39e15e`
+- Local normative corpus: `oauth2-specs/`
+
 Artifacts:
 
 - `mercure-oauth-review-matrix.md`
@@ -26,8 +33,9 @@ Artifacts:
   - JWKS validation can run without an explicit JWS algorithm allowlist.
   - URLPattern falls back to a synthetic base instead of the hub URL when `public_url` is unset.
   - Debug UI, conformance tests, and several docs still use legacy `topic` / `topicURLPattern` subscribe parameters.
-- Minor: 1
+- Minor: 2
   - `application/at+jwt` handling is not fully case-insensitive despite the comment.
+  - `resource_identifier` is not validated as an RFC 9728 protected resource identifier URL before being published as metadata.
 - Question: 1
   - Whether RFC 9728 metadata should advertise `authorization_details_types_supported: ["mercure"]`.
 
@@ -63,10 +71,14 @@ Passing:
 - #1273 Caddy compat: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...` from `caddy/`
 - Follow-up #1269 at `e781ad9`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...`
 - Follow-up #1273 at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...`
+- Final #1273 at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...`
+- Final #1273 compat at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...`
+- Final #1273 Caddy at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...` from `caddy/`
 
-Not run:
+Not run / inconclusive:
 
-- Playwright conformance tests. They have no installed `node_modules`, no package script, assume an external running hub, and currently exercise legacy subscribe parameters.
+- Playwright conformance tests were prepared locally with Playwright 1.60.0, browser/dependency installation, and `npm run test:e2e`. The run starts but the first `Publish update / raw string` test times out after the hub returns `400 Bad Request` for the EventSource subscribe URL. The suite still assumes an external running hub and currently exercises legacy subscribe parameters.
+- Final #1273 Caddy compat rerun was interrupted after hanging without output for more than two minutes inside the sandbox. This does not invalidate the earlier successful Caddy compat run, but the final rerun is non-conclusive.
 
 GitHub checks:
 
@@ -81,6 +93,11 @@ Address the three Major findings before merging #1273 into a modern-default rele
 1. Make JWKS algorithm pinning mandatory or provide an explicit safe default allowlist.
 2. Require or derive the real hub URL for URLPattern base resolution.
 3. Update UI, conformance, and docs to modern `match` / `matchURLPattern` semantics.
+
+Also address the two Minor findings for standards polish and OAuth discovery interoperability:
+
+1. Accept both `at+jwt` and `application/at+jwt` with fully case-insensitive matching.
+2. Validate `resource_identifier` as an RFC 9728 resource URL, or explicitly document any deliberate non-URL compatibility mode.
 
 After fixes, rerun:
 

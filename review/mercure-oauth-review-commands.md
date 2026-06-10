@@ -74,6 +74,19 @@ External normative references consulted:
 - RFC 9728: https://www.rfc-editor.org/rfc/rfc9728.html
 - WHATWG URLPattern: https://urlpattern.spec.whatwg.org/
 
+Local normative corpus used for the final review:
+
+```bash
+rg --files oauth2-specs | rg 'rfc(6750|7515|7517|7519|8725|9068|9396|9728|8414)|oauth|jwt|jws|jwk|bearer|protected-resource'
+rg -n "MUST|MUST NOT|SHOULD|SHOULD NOT|authorization_details|Bearer|WWW-Authenticate|invalid_token|invalid_request|insufficient_scope|resource_metadata|authorization_details_types_supported|bearer_methods_supported|aud|iss|client_id|jti|typ|alg=none|algorithm|JWK|JWS|JWT access token" oauth2-specs/rfc9068-json-web-token-jwt-profile-for-oauth-2-0-access-tokens.md oauth2-specs/rfc9396-oauth-2-0-rich-authorization-requests.md oauth2-specs/rfc6750-the-oauth-2-0-authorization-framework-bearer-token-usage.md oauth2-specs/rfc9728-oauth-2-0-protected-resource-metadata.md oauth2-specs/rfc8725-json-web-token-best-current-practices.md oauth2-specs/rfc8414-oauth-2-0-authorization-server-metadata.md
+sed -n '390,520p' oauth2-specs/rfc9068-json-web-token-jwt-profile-for-oauth-2-0-access-tokens.md
+sed -n '280,350p' oauth2-specs/rfc8725-json-web-token-best-current-practices.md
+sed -n '960,1110p' oauth2-specs/rfc9396-oauth-2-0-rich-authorization-requests.md
+sed -n '145,360p' oauth2-specs/rfc9728-oauth-2-0-protected-resource-metadata.md
+sed -n '360,535p' oauth2-specs/rfc9728-oauth-2-0-protected-resource-metadata.md
+sed -n '350,490p' oauth2-specs/rfc6750-the-oauth-2-0-authorization-framework-bearer-token-usage.md
+```
+
 ## Test execution
 
 First attempts without cache override failed because Go tried to write modules under `/home/jeremy/go/pkg/mod`, which is read-only in the sandbox:
@@ -126,6 +139,28 @@ Results:
   - `ok github.com/dunglas/mercure/caddy 1.132s`
   - `? github.com/dunglas/mercure/caddy/mercure [no test files]`
 
+Final spec-grounded validation on #1273 at `edfaa64`:
+
+```bash
+env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...
+env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...
+(cd caddy && env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...)
+(cd caddy && env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...)
+```
+
+Results:
+
+- Main #1273 tests: PASS
+  - `ok github.com/dunglas/mercure (cached)`
+  - `ok github.com/dunglas/mercure/common (cached)`
+- Main #1273 compatibility tests: PASS
+  - `ok github.com/dunglas/mercure 1.102s`
+  - `ok github.com/dunglas/mercure/common (cached)`
+- Caddy #1273 tests: PASS
+  - `ok github.com/dunglas/mercure/caddy 1.111s`
+  - `? github.com/dunglas/mercure/caddy/mercure [no test files]`
+- Caddy #1273 compatibility rerun: non-conclusive. The process ran with `-test.timeout=10m0s` but produced no output for more than two minutes inside the sandbox and was interrupted. No failure output was produced before interruption.
+
 Conformance tests:
 
 ```bash
@@ -135,11 +170,13 @@ sed -n '1,220p' conformance-tests/package.json
 sed -n '1,220p' conformance-tests/playwright.config.ts
 sed -n '1,220p' conformance-tests/mercure.spec.ts
 ls -la conformance-tests/node_modules
+npm run test:e2e
 ```
 
 Result:
 
-- Not executed.
-- There is no `node_modules` directory and no package script.
+- Playwright was installed locally at 1.60.0, with browsers/dependencies, and `test:e2e` was added in the local `mercure/conformance-tests` worktree.
+- `npm run test:e2e` starts Chromium tests against `BASE_URL=http://127.0.0.1:9444/.well-known/mercure`.
+- First failure: `Publish update / raw string` times out after the browser receives `400 Bad Request` for `/.well-known/mercure?topic=...`.
 - The suite assumes an external running hub via `BASE_URL`.
 - Static inspection found it still uses legacy `topic` / `topicURLPattern`, which is captured as a Major finding.

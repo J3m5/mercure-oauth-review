@@ -35,7 +35,18 @@ References normatives a utiliser :
 - RFC 9396 - OAuth 2.0 Rich Authorization Requests : https://www.rfc-editor.org/rfc/rfc9396.html
 - RFC 6750 - Bearer Token Usage : https://www.rfc-editor.org/rfc/rfc6750.html
 - RFC 9728 - OAuth 2.0 Protected Resource Metadata : https://www.rfc-editor.org/rfc/rfc9728.html
+- RFC 8725 - JSON Web Token Best Current Practices : https://www.rfc-editor.org/rfc/rfc8725.html
+- RFC 8414 - OAuth 2.0 Authorization Server Metadata : https://www.rfc-editor.org/rfc/rfc8414.html
 - WHATWG URLPattern : https://urlpattern.spec.whatwg.org/
+
+Copies locales utilisees pour la passe finale :
+
+- `oauth2-specs/rfc9068-json-web-token-jwt-profile-for-oauth-2-0-access-tokens.md`
+- `oauth2-specs/rfc9396-oauth-2-0-rich-authorization-requests.md`
+- `oauth2-specs/rfc6750-the-oauth-2-0-authorization-framework-bearer-token-usage.md`
+- `oauth2-specs/rfc9728-oauth-2-0-protected-resource-metadata.md`
+- `oauth2-specs/rfc8725-json-web-token-best-current-practices.md`
+- `oauth2-specs/rfc8414-oauth-2-0-authorization-server-metadata.md`
 
 ## Plan de Review
 
@@ -174,10 +185,12 @@ Controler :
   - presence de `resource_metadata` dans le challenge quand pertinent
 - Metadata RFC 9728 :
   - endpoint `/.well-known/oauth-protected-resource/.well-known/mercure`
+  - `resource_identifier` valide comme URL HTTPS sans fragment
   - `resource`
   - `authorization_servers`
   - `bearer_methods_supported` limite aux methodes RFC 6750
   - `mercure_cookie` comme extension dediee
+  - decision explicite sur `authorization_details_types_supported`
 - Compatibilite v8 :
   - legacy `mercure` claim derriere `deprecated_claim`
   - ancien cookie derriere compat si prevu

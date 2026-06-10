@@ -8,6 +8,11 @@ Follow-up comparison after maintainer pushes on 2026-06-10:
 - #1269 matchers: `e781ad9`
 - #1273 OAuth: `edfaa64`
 
+Final spec-grounded review:
+
+- Date: 2026-06-10
+- Local normative corpus: `oauth2-specs/`
+
 Status legend: OK, Partial, Gap, Not checked, N/A.
 
 | ID | Requirement | Section | Level | Expected behavior | PR / implementation files | Status |
@@ -47,3 +52,4 @@ Status legend: OK, Partial, Gap, Not checked, N/A.
 | M33 | Access token in query is discouraged and tokens are redacted from logs. | Security / RFC 6750 | SHOULD / MUST where applicable | Redact `access_token` and legacy `authorization` query fields. | #1273 `Caddyfile`, `dev.Caddyfile` | OK |
 | M34 | Cookie named `mercureAccessToken` should be Secure/HttpOnly/SameSite. | Cookie / Security | SHOULD / MUST | Default cookie name and secure attributes. | #1273 `authorization.go`, `demo.go`, docs | Partial: demo relaxes Secure/HttpOnly over HTTP for local use |
 | M35 | v8 topic selectors, alternate topics, legacy claim and legacy routes are behind build tags and `protocol_version_compatibility 8`. | Compatibility | MUST for compat boundary | Modern mode rejects old behavior; compat tests cover old behavior. | #1269/#1273 `*_deprecated*.go`, tests | OK |
+| M36 | Protected resource identifier is an HTTPS URL without a fragment before being published in RFC 9728 metadata. | Protected Resource Metadata / RFC 9728 | Definition / validation requirement for clients | Reject or avoid publishing invalid resource identifiers. | #1273 `hub.go`, `resourcemetadata.go`, `caddy/mercure.go` | Partial: value is required for JWT validation but not validated as an RFC 9728 URL |

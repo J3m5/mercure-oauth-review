@@ -12,6 +12,13 @@ Follow-up comparison after maintainer pushes on 2026-06-10:
 - Matchers: `e781ad9`
 - OAuth: `edfaa64`
 
+Final spec-grounded review:
+
+- Date: 2026-06-10
+- OAuth worktree: `mercure-feat-oauth-authz` at `edfaa64`
+- Spec worktree: `mercure` / `spec/oauth-authz` at `a39e15e`
+- Local normative corpus: `oauth2-specs/`
+
 ## Blocker
 
 No blocker found.
@@ -79,7 +86,25 @@ No blocker found.
 - Expected tests: accept `typ: "application/at+jwt"` and a mixed-case prefix variant; still reject `JWT` / ID-token style values.
 - Follow-up status at `edfaa64`: still open. `Authorization: Bearer` scheme matching was fixed, but JWT `typ` still uses `strings.TrimPrefix(typ, "application/")` before `strings.EqualFold`, so `Application/at+jwt` remains rejected.
 
-### 5. Resolved: #1269 CI lint fails on the `deprecated_topic` build path
+### 5. `resource_identifier` is published without RFC 9728 URL validation
+
+- PR: #1273
+- Files:
+  - `hub.go` lines 307-313: https://github.com/dunglas/mercure/blob/edfaa64/hub.go#L307-L313
+  - `hub.go` lines 431-440: https://github.com/dunglas/mercure/blob/edfaa64/hub.go#L431-L440
+  - `resourcemetadata.go` lines 17-25: https://github.com/dunglas/mercure/blob/edfaa64/resourcemetadata.go#L17-L25
+  - `resourcemetadata.go` lines 40-47: https://github.com/dunglas/mercure/blob/edfaa64/resourcemetadata.go#L40-L47
+- Requirement: RFC 9728 defines a protected resource identifier as a URL using the `https` scheme and no fragment component. The metadata response `resource` value is the protected resource identifier clients validate against the metadata URL or `WWW-Authenticate` `resource_metadata` flow.
+- Evidence: `WithResourceIdentifier` accepts any string and `NewHub` only verifies that some value exists when JWT validation is enabled. That value is then copied verbatim to the protected resource metadata `resource` member.
+- Impact: a Caddy or Go deployment can publish metadata that strict RFC 9728 clients must ignore because `resource` is not an `https` URL, contains a fragment, or otherwise cannot be the identifier used to derive the metadata URL. The token `aud` check can still work internally, but OAuth discovery interoperability is weakened.
+- Proposed fix: validate `resource_identifier` in modern mode as an RFC 9728 resource identifier: absolute URL, `https` scheme, no fragment; preferably no query unless deliberately supported. If Mercure intentionally allows non-URL audiences for self-issued deployments, do not publish RFC 9728 metadata for that value or document a clearly labelled non-conformant compatibility mode.
+- Expected tests: `NewHub` / Caddy provisioning rejects `resource_identifier foo`, `http://...`, and `https://...#fragment` in modern token-validating mode; valid `https://hub.example.com/.well-known/mercure` succeeds and is emitted unchanged in metadata.
+
+## Resolved Follow-Up Items
+
+These were review-adjacent gaps or CI issues observed during the initial pass and are no longer open after the 2026-06-10 maintainer pushes.
+
+### #1269 CI lint fails on the `deprecated_topic` build path
 
 - PR: #1269
 - File: `subscribematchers.go` line 116: https://github.com/dunglas/mercure/blob/6acf34e3004173a13bfe89a37996e062d4a9844f/subscribematchers.go#L116
@@ -89,10 +114,6 @@ No blocker found.
 - Proposed fix: explicitly handle `deprecatedMatcherTypeName` in `matcherTypeFromParam` or add a narrowly scoped exhaustive directive if the omission is intentional because query params must never select the internal matcher type.
 - Expected tests: CI lint passes with the repository's deprecated tag GOFLAGS.
 - Follow-up status at `e781ad9`: resolved. `matcherTypeFromParam` now explicitly handles `deprecatedMatcherTypeName` as not addressable from the wire, and #1269 lint-related GitHub checks pass.
-
-## Resolved Follow-Up Items
-
-These were review-adjacent gaps or CI issues observed during the initial pass and are no longer open after the 2026-06-10 maintainer pushes:
 
 - `Authorization` scheme matching is case-insensitive in #1273 and documented in #1262.
 - Malformed `authorization_details` is mapped to `401 invalid_token`, not `400 invalid_request`.
