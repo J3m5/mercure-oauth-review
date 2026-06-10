@@ -6,6 +6,12 @@ PRs reviewed:
 - Matchers: https://github.com/dunglas/mercure/pull/1269 (`feat/matchers`, `6acf34e3004173a13bfe89a37996e062d4a9844f`)
 - OAuth: https://github.com/dunglas/mercure/pull/1273 (`feat/oauth-authz`, `4669234f611ffb5c2a0ac2fab00efc32fc023334`)
 
+Follow-up comparison after maintainer pushes on 2026-06-10:
+
+- Spec: `a39e15e`
+- Matchers: `e781ad9`
+- OAuth: `edfaa64`
+
 ## Blocker
 
 No blocker found.
@@ -24,6 +30,7 @@ No blocker found.
 - Impact: a JWKS-backed deployment can be configured without a protocol-level algorithm allowlist. That weakens the defense against algorithm confusion and makes acceptance depend on library/JWK metadata behavior instead of Mercure's normative policy.
 - Proposed fix: make JWKS algorithm allowlists mandatory in modern mode. For Caddy, reject provisioning when `publisher_jwks_url` is set without `publisher_jwks_algorithms`, and similarly for subscribers. Alternatively provide a deliberately explicit default allowlist, document it, and pass it into `jwt.WithValidMethods`.
 - Expected tests: Caddy provisioning fails for JWKS without algorithms in modern mode; succeeds with algorithms; a token signed with an algorithm outside the configured list is rejected with `401 invalid_token`; compatibility behavior, if intentionally different, is covered separately.
+- Follow-up status at `edfaa64`: still open. The comment now explicitly says the JWKS path relies on per-key algorithm constraints when no allowlist is configured, and Caddy still treats `publisher_jwks_algorithms` / `subscriber_jwks_algorithms` as optional.
 
 ### 2. URLPattern matching falls back to a synthetic base instead of the hub URL when `public_url` is unset
 
@@ -39,6 +46,7 @@ No blocker found.
 - Impact: default/typical modern Caddy configuration can support URLPattern only partially. Relative URLPattern authorization details or subscribe matchers will not be resolved against the actual hub URL as required, so valid subscriptions or authorizations can miss updates.
 - Proposed fix: make the real hub URL available to URLPattern matching in modern mode. Practical options: require `public_url` whenever URLPattern support is active, default it from a full hub `resource_identifier` when safe, or derive/store per-request base for subscriber matchers and authorization validation. Update the default Caddyfile and docs accordingly.
 - Expected tests: with no `public_url`, either startup fails with a clear error or a relative pattern is resolved against the actual hub URL. Add tests for relative pattern vs absolute topic and absolute pattern vs relative topic.
+- Follow-up status at `e781ad9` / `edfaa64`: still open. The code still falls back to `http://mercure.invalid`; comments now document that cross-mode matching requires `public_url`, but startup does not require it and no real hub URL is derived automatically.
 
 ### 3. Debug UI, conformance tests, and several user docs still use legacy subscribe parameters
 
@@ -56,6 +64,7 @@ No blocker found.
 - Impact: the demo/debug UI and conformance tests exercise the legacy API, not the modern protocol. In a modern-only build/default configuration, these examples fail with 400 instead of proving conformance. Users copying the docs will hit the removed path.
 - Proposed fix: replace subscribe-side `topic` with `match`, and `topicURLPattern` with `matchURLPattern`, across UI, conformance tests, getting started, FAQ/troubleshooting snippets, and ecosystem examples. Keep legacy examples only in an explicitly labelled compatibility section.
 - Expected tests: conformance tests use `match`/`matchURLPattern` by default and include a negative test that `topic` is rejected without compatibility. UI smoke test or unit-level DOM check verifies emitted query parameters.
+- Follow-up status at `edfaa64`: still open. `public/app.js` still appends `topicURLPattern` for subscription events, `conformance-tests/mercure.spec.ts` still selects `topic` / `topicURLPattern`, and user docs still contain modern-path examples using `topic=`.
 
 ## Minor
 
@@ -68,8 +77,9 @@ No blocker found.
 - Impact: standards-compliant clients using a differently cased media type prefix may be rejected. This is small because typical issuers use lowercase, but the code/comment/test coverage do not match the stated behavior.
 - Proposed fix: compare `typ` case-insensitively against both accepted values, or lowercase before trimming the prefix.
 - Expected tests: accept `typ: "application/at+jwt"` and a mixed-case prefix variant; still reject `JWT` / ID-token style values.
+- Follow-up status at `edfaa64`: still open. `Authorization: Bearer` scheme matching was fixed, but JWT `typ` still uses `strings.TrimPrefix(typ, "application/")` before `strings.EqualFold`, so `Application/at+jwt` remains rejected.
 
-### 5. #1269 CI lint fails on the `deprecated_topic` build path
+### 5. Resolved: #1269 CI lint fails on the `deprecated_topic` build path
 
 - PR: #1269
 - File: `subscribematchers.go` line 116: https://github.com/dunglas/mercure/blob/6acf34e3004173a13bfe89a37996e062d4a9844f/subscribematchers.go#L116
@@ -78,6 +88,18 @@ No blocker found.
 - Impact: merge is blocked and the deprecated-topic build path is not clean under the repository lint profile, even though local `go test -tags deprecated_topic,deprecated_claim ./...` passes.
 - Proposed fix: explicitly handle `deprecatedMatcherTypeName` in `matcherTypeFromParam` or add a narrowly scoped exhaustive directive if the omission is intentional because query params must never select the internal matcher type.
 - Expected tests: CI lint passes with the repository's deprecated tag GOFLAGS.
+- Follow-up status at `e781ad9`: resolved. `matcherTypeFromParam` now explicitly handles `deprecatedMatcherTypeName` as not addressable from the wire, and #1269 lint-related GitHub checks pass.
+
+## Resolved Follow-Up Items
+
+These were review-adjacent gaps or CI issues observed during the initial pass and are no longer open after the 2026-06-10 maintainer pushes:
+
+- `Authorization` scheme matching is case-insensitive in #1273 and documented in #1262.
+- Malformed `authorization_details` is mapped to `401 invalid_token`, not `400 invalid_request`.
+- Credentialed CORS no longer combines `Access-Control-Allow-Origin: *` with `Access-Control-Allow-Credentials: true`.
+- Reserved hub namespace checks now resolve with the WHATWG URL algorithm and decode unreserved percent encodings before comparison.
+- Publisher-supplied update IDs starting with `#` or equal to `earliest` are rejected.
+- Subscription API ETags are emitted as RFC 9110 quoted strings.
 
 ## Question
 
