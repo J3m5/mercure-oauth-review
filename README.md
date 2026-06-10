@@ -13,7 +13,7 @@ This is a technical review dossier, not a conformance certification. The final p
 - Minor: 2
 - Question: 1
 
-Go tests passed for the reviewed worktrees, including the main compatibility-tag runs. Playwright conformance tests were prepared locally with Playwright 1.60.0, but the run is not validated yet: the first test times out after the hub returns `400 Bad Request` for the EventSource subscribe URL. The final Caddy compatibility rerun was also non-conclusive because it hung without output inside the sandbox.
+Go tests passed for the reviewed worktrees, including the main compatibility-tag runs. Playwright conformance tests were prepared locally with Playwright 1.60.0. The initial E2E run failed with `400 Bad Request` because the suite still used legacy `topic` subscribe parameters; after a local adaptation to `match` / `matchURLPattern` and modern OAuth JWT authorization details, the last recorded Playwright run passed with no failed tests. The final Caddy compatibility rerun was non-conclusive because it hung without output inside the sandbox.
 
 ## Contents
 

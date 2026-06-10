@@ -32,7 +32,7 @@ Artifacts:
 - Major: 3
   - JWKS validation can run without an explicit JWS algorithm allowlist.
   - URLPattern falls back to a synthetic base instead of the hub URL when `public_url` is unset.
-  - Debug UI, conformance tests, and several docs still use legacy `topic` / `topicURLPattern` subscribe parameters.
+  - Debug UI, upstream conformance tests, and several docs still use legacy `topic` / `topicURLPattern` subscribe parameters. A local adaptation of the conformance suite to `match` / `matchURLPattern` passed.
 - Minor: 2
   - `application/at+jwt` handling is not fully case-insensitive despite the comment.
   - `resource_identifier` is not validated as an RFC 9728 protected resource identifier URL before being published as metadata.
@@ -74,10 +74,11 @@ Passing:
 - Final #1273 at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...`
 - Final #1273 compat at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...`
 - Final #1273 Caddy at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...` from `caddy/`
+- Local Playwright conformance after adapting `mercure/conformance-tests` to modern `match` / `matchURLPattern`: `npm run test:e2e`, last-run status `passed`, `failedTests: []`
 
 Not run / inconclusive:
 
-- Playwright conformance tests were prepared locally with Playwright 1.60.0, browser/dependency installation, and `npm run test:e2e`. The run starts but the first `Publish update / raw string` test times out after the hub returns `400 Bad Request` for the EventSource subscribe URL. The suite still assumes an external running hub and currently exercises legacy subscribe parameters.
+- Initial Playwright conformance run, before adapting the suite, failed on `Publish update / raw string` because the hub returned `400 Bad Request` for the legacy `topic=...` EventSource subscribe URL.
 - Final #1273 Caddy compat rerun was interrupted after hanging without output for more than two minutes inside the sandbox. This does not invalidate the earlier successful Caddy compat run, but the final rerun is non-conclusive.
 
 GitHub checks:
@@ -92,7 +93,7 @@ Address the three Major findings before merging #1273 into a modern-default rele
 
 1. Make JWKS algorithm pinning mandatory or provide an explicit safe default allowlist.
 2. Require or derive the real hub URL for URLPattern base resolution.
-3. Update UI, conformance, and docs to modern `match` / `matchURLPattern` semantics.
+3. Land the conformance-test adaptation and update UI/docs to modern `match` / `matchURLPattern` semantics.
 
 Also address the two Minor findings for standards polish and OAuth discovery interoperability:
 
@@ -108,4 +109,4 @@ env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tag
 (cd caddy && env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...)
 ```
 
-Then run conformance tests against a modern hub configured without `protocol_version_compatibility 8`, and add a separate compatibility conformance run only if legacy behavior is intentionally tested.
+Then rerun conformance tests against a modern hub configured without `protocol_version_compatibility 8`, and add a separate compatibility conformance run only if legacy behavior is intentionally tested.

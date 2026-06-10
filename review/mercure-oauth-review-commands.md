@@ -177,6 +177,16 @@ Result:
 
 - Playwright was installed locally at 1.60.0, with browsers/dependencies, and `test:e2e` was added in the local `mercure/conformance-tests` worktree.
 - `npm run test:e2e` starts Chromium tests against `BASE_URL=http://127.0.0.1:9444/.well-known/mercure`.
-- First failure: `Publish update / raw string` times out after the browser receives `400 Bad Request` for `/.well-known/mercure?topic=...`.
-- The suite assumes an external running hub via `BASE_URL`.
-- Static inspection found it still uses legacy `topic` / `topicURLPattern`, which is captured as a Major finding.
+- Initial failure: `Publish update / raw string` timed out after the browser received `400 Bad Request` for `/.well-known/mercure?topic=...`.
+- The local suite was then adapted to use `match` / `matchURLPattern`, URLPattern `:param` syntax, and a modern OAuth JWT containing `typ`, `aud`, `authorization_details`, and `exp`.
+- Last recorded Playwright result:
+
+  ```json
+  {
+    "status": "passed",
+    "failedTests": []
+  }
+  ```
+
+- The suite still assumes an external running hub via `BASE_URL`.
+- The upstream PR files at `edfaa64` still use legacy `topic` / `topicURLPattern`, which is captured as a Major finding until the local adaptation is committed upstream.

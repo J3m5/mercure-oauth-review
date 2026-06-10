@@ -72,6 +72,7 @@ No blocker found.
 - Proposed fix: replace subscribe-side `topic` with `match`, and `topicURLPattern` with `matchURLPattern`, across UI, conformance tests, getting started, FAQ/troubleshooting snippets, and ecosystem examples. Keep legacy examples only in an explicitly labelled compatibility section.
 - Expected tests: conformance tests use `match`/`matchURLPattern` by default and include a negative test that `topic` is rejected without compatibility. UI smoke test or unit-level DOM check verifies emitted query parameters.
 - Follow-up status at `edfaa64`: still open. `public/app.js` still appends `topicURLPattern` for subscription events, `conformance-tests/mercure.spec.ts` still selects `topic` / `topicURLPattern`, and user docs still contain modern-path examples using `topic=`.
+- Local validation note: after adapting the local `mercure/conformance-tests` worktree to emit `match` / `matchURLPattern`, update URLPattern cases, and use a modern OAuth JWT with `authorization_details`, `npm run test:e2e` produced a Playwright `.last-run.json` status of `passed` with `failedTests: []`. This validates the conformance-test remediation locally, but it does not change the upstream PR status until those changes are committed to the relevant branch.
 
 ## Minor
 

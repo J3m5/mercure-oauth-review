@@ -18,7 +18,7 @@ Status legend: OK, Partial, Gap, Not checked, N/A.
 | ID | Requirement | Section | Level | Expected behavior | PR / implementation files | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 | M01 | Topic strings are valid UTF-8 and contain no C0/C1/DEL. | Terminology, Subscription, Publication | MUST / MUST NOT | Reject invalid topic or matcher values with 400. | #1269 `matchertype.go`, `subscribematchers.go`; #1273 `authorizationdetails.go`, `publish.go` | OK |
-| M02 | Subscribe uses `match`, `matchExact`, `matchURLPattern`; unknown `match*` names are rejected. | Subscription | MUST | Parse canonical matcher params; reject `topic` outside v8 compat. | #1269 `subscribematchers.go`, `subscribe_notdeprecated_topic_test.go` | OK for code; Gap in UI/docs/conformance |
+| M02 | Subscribe uses `match`, `matchExact`, `matchURLPattern`; unknown `match*` names are rejected. | Subscription | MUST | Parse canonical matcher params; reject `topic` outside v8 compat. | #1269 `subscribematchers.go`, `subscribe_notdeprecated_topic_test.go` | OK for code; Gap remains in upstream UI/docs/conformance; local adapted conformance run passed |
 | M03 | Subscribe matcher count and pattern length are bounded. | Subscription | SHOULD / MUST | Reject excessive count or long patterns with 400. | #1269 `subscribematchers.go`; #1273 `authorizationdetails.go` | OK |
 | M04 | Exact matcher is byte-for-byte, no normalization, no relative URL resolution. | Exact Matching | MUST / MUST NOT | Exact comparison only. | #1269 `topicselector.go`, `topicselector_test.go` | OK |
 | M05 | URLPattern matcher is supported. | URL Pattern | MUST | Compile and evaluate WHATWG URLPattern. | #1269 `topicselector.go` using `github.com/dunglas/go-urlpattern` | OK |
