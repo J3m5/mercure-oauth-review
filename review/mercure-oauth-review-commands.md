@@ -1,6 +1,6 @@
 # Mercure OAuth 2.0 Review Commands
 
-All commands were run from `/home/jeremy/workspace/development/tilleuls/dunglas` unless noted.
+All commands were run from the parent checkout directory containing `mercure`, `mercure-feat-matchers`, and `mercure-feat-oauth-authz`, unless noted.
 
 ## Setup and PR state
 
@@ -89,7 +89,7 @@ sed -n '350,490p' oauth2-specs/rfc6750-the-oauth-2-0-authorization-framework-bea
 
 ## Test execution
 
-First attempts without cache override failed because Go tried to write modules under `/home/jeremy/go/pkg/mod`, which is read-only in the sandbox:
+First attempts without cache override failed because Go tried to write modules under the default user Go module cache, which is read-only in the sandbox:
 
 ```bash
 go test ./...
