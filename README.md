@@ -4,16 +4,16 @@ This repository stores review artifacts for the Mercure OAuth 2.0 authorization 
 
 ## Current Status
 
-Final review date: 2026-06-10.
+Final review date: 2026-06-10. Follow-up after maintainer commits: 2026-06-11.
 
-This is a technical review dossier, not a conformance certification. The final pass found:
+This is a technical review dossier, not a conformance certification. The 2026-06-11 follow-up found:
 
 - Blocker: 0
-- Major: 3
-- Minor: 2
-- Question: 1
+- Major: 0
+- Minor: 1 remaining partial item
+- Question: 0
 
-Go tests passed for the reviewed worktrees, including the main compatibility-tag runs. Playwright conformance tests were prepared locally with Playwright 1.60.0. The initial E2E run failed with `400 Bad Request` because the suite still used legacy `topic` subscribe parameters; after a local adaptation to `match` / `matchURLPattern` and modern OAuth JWT authorization details, the last recorded Playwright run passed with no failed tests. The final Caddy compatibility rerun was non-conclusive because it hung without output inside the sandbox.
+Kevin's latest commits address the three Major findings, the mixed-case `application/at+jwt` Minor finding, and the metadata question. The remaining partial item is `resource_identifier`: it now rejects non-URL and fragment-bearing values, but still publishes non-HTTPS resource identifiers with only a warning. Go tests pass on #1273 at `0a415e4`, including compatibility-tag and Caddy runs. #1262 and #1269 GitHub checks pass; #1273 still only exposes `license/cla` through `gh pr checks`.
 
 ## Contents
 

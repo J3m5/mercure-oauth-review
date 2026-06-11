@@ -190,3 +190,64 @@ Result:
 
 - The suite still assumes an external running hub via `BASE_URL`.
 - The upstream PR files at `edfaa64` still use legacy `topic` / `topicURLPattern`, which is captured as a Major finding until the local adaptation is committed upstream.
+
+## 2026-06-11 maintainer follow-up
+
+Refs fetched:
+
+```bash
+git fetch origin spec/oauth-authz feat/matchers feat/oauth-authz
+gh pr view 1262 -R dunglas/mercure --json number,title,state,isDraft,baseRefName,headRefName,headRefOid,mergeStateStatus,reviewDecision,url
+gh pr view 1269 -R dunglas/mercure --json number,title,state,isDraft,baseRefName,headRefName,headRefOid,mergeStateStatus,reviewDecision,url
+gh pr view 1273 -R dunglas/mercure --json number,title,state,isDraft,baseRefName,headRefName,headRefOid,mergeStateStatus,reviewDecision,url
+gh pr checks 1262 -R dunglas/mercure
+gh pr checks 1269 -R dunglas/mercure
+gh pr checks 1273 -R dunglas/mercure
+git log --oneline edfaa64..origin/feat/oauth-authz
+```
+
+Updated heads:
+
+- #1262 `spec/oauth-authz`: `75cc92a`
+- #1269 `feat/matchers`: `fe3122e`
+- #1273 `feat/oauth-authz`: `0a415e4`
+
+Relevant commits:
+
+- `5e21199 feat(authz): harden token validation and metadata per external review`
+- `a7cfce8 fix(ui): subscribe with the match/matchURLPattern parameters`
+- `e2d9975 docs: subscribe with the match/matchURLPattern parameters`
+- `a109870 spec: advertise authorization_details_types_supported`
+
+Local validation on #1273 at `0a415e4`:
+
+```bash
+git switch --detach origin/feat/oauth-authz
+env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...
+env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...
+(cd caddy && env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...)
+(cd caddy && env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...)
+```
+
+Results:
+
+- Main #1273 tests: PASS
+  - `ok github.com/dunglas/mercure 1.064s`
+  - `ok github.com/dunglas/mercure/common (cached)`
+- Main #1273 compatibility tests: PASS after rerunning alone
+  - `ok github.com/dunglas/mercure 1.069s`
+  - `ok github.com/dunglas/mercure/common (cached)`
+- Caddy #1273 tests: PASS
+  - `ok github.com/dunglas/mercure/caddy 1.113s`
+  - `? github.com/dunglas/mercure/caddy/mercure [no test files]`
+- Caddy #1273 compatibility tests: PASS
+  - `ok github.com/dunglas/mercure/caddy 1.158s`
+  - `? github.com/dunglas/mercure/caddy/mercure [no test files]`
+
+The first compatibility run was started concurrently with another `go test` process in the same worktree and failed on transient Bolt test-file cleanup/collision errors; the isolated rerun passed.
+
+GitHub checks:
+
+- #1262 at `75cc92a`: all reported checks pass.
+- #1269 at `fe3122e`: all reported checks pass; PR remains draft.
+- #1273 at `0a415e4`: `gh pr checks` reports only `license/cla`.

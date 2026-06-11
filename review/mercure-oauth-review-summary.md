@@ -19,6 +19,12 @@ Final spec-grounded review:
 - Spec worktree: `mercure` / `spec/oauth-authz` at `a39e15e`
 - Local normative corpus: `oauth2-specs/`
 
+Follow-up after Kevin's latest commits on 2026-06-11:
+
+- #1262 spec: `75cc92a`
+- #1269 matchers: `fe3122e`
+- #1273 OAuth: `0a415e4`
+
 Artifacts:
 
 - `mercure-oauth-review-matrix.md`
@@ -29,18 +35,18 @@ Artifacts:
 ## Findings
 
 - Blocker: none found.
-- Major: 3
-  - JWKS validation can run without an explicit JWS algorithm allowlist.
-  - URLPattern falls back to a synthetic base instead of the hub URL when `public_url` is unset.
-  - Debug UI, upstream conformance tests, and several docs still use legacy `topic` / `topicURLPattern` subscribe parameters. A local adaptation of the conformance suite to `match` / `matchURLPattern` passed.
-- Minor: 2
-  - `application/at+jwt` handling is not fully case-insensitive despite the comment.
-  - `resource_identifier` is not validated as an RFC 9728 protected resource identifier URL before being published as metadata.
-- Question: 1
-  - Whether RFC 9728 metadata should advertise `authorization_details_types_supported: ["mercure"]`.
+- Major: 0 remaining.
+- Minor: 1 partial item remaining.
+  - `resource_identifier` now rejects invalid URLs and fragments, but non-HTTPS identifiers are still published with only a warning.
+- Question: 0 remaining.
 
 Resolved since the initial review:
 
+- JWKS-backed validation gets a default asymmetric JWS algorithm allowlist when no explicit list is configured.
+- URLPattern matching derives the real base from a full hub `resource_identifier` when `public_url` is unset.
+- Debug UI, conformance tests, and user docs now use `match` / `matchURLPattern` for subscriptions.
+- `application/at+jwt` matching accepts mixed-case `Application/AT+JWT`.
+- Protected resource metadata advertises `authorization_details_types_supported: ["mercure"]`.
 - #1269 CI lint failure on `deprecatedMatcherTypeName` is fixed.
 - `Authorization: Bearer` scheme matching is now case-insensitive in #1273 and documented in #1262.
 - Malformed `authorization_details` is now mapped to `401 invalid_token`.
@@ -75,30 +81,28 @@ Passing:
 - Final #1273 compat at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...`
 - Final #1273 Caddy at `edfaa64`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...` from `caddy/`
 - Local Playwright conformance after adapting `mercure/conformance-tests` to modern `match` / `matchURLPattern`: `npm run test:e2e`, last-run status `passed`, `failedTests: []`
+- Follow-up #1273 at `0a415e4`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...`
+- Follow-up #1273 compat at `0a415e4`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...`
+- Follow-up #1273 Caddy at `0a415e4`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test ./...` from `caddy/`
+- Follow-up #1273 Caddy compat at `0a415e4`: `env GOMODCACHE=/tmp/mercure-gomodcache GOCACHE=/tmp/mercure-gocache go test -tags deprecated_topic,deprecated_claim ./...` from `caddy/`
 
-Not run / inconclusive:
+Historical failed / inconclusive runs:
 
 - Initial Playwright conformance run, before adapting the suite, failed on `Publish update / raw string` because the hub returned `400 Bad Request` for the legacy `topic=...` EventSource subscribe URL.
-- Final #1273 Caddy compat rerun was interrupted after hanging without output for more than two minutes inside the sandbox. This does not invalidate the earlier successful Caddy compat run, but the final rerun is non-conclusive.
+- A first follow-up compat run was started in parallel with another test process and failed on transient Bolt test-file collisions; rerunning it alone passed.
 
 GitHub checks:
 
-- #1262 after `a39e15e`: `lint` fails only on `NATURAL_LANGUAGE`, `spec/mercure.md:153`, where textlint wants `website` replaced by `site`; `Test (1.26)` was pending when checked.
-- #1269 after `e781ad9`: lint-related checks pass; `Test (1.26)` was pending when checked.
-- #1273 after `edfaa64`: only `license/cla` was reported by `gh pr checks` when checked.
+- #1262 after `75cc92a`: lint, tests, schema, release, and CLA pass.
+- #1269 after `fe3122e`: lint, tests, schema, release, and related checks pass. The PR remains draft.
+- #1273 after `0a415e4`: `gh pr checks` still reports only `license/cla`.
 
 ## Recommended maintainer action
 
-Address the three Major findings before merging #1273 into a modern-default release:
+Before merging #1273 into a modern-default release:
 
-1. Make JWKS algorithm pinning mandatory or provide an explicit safe default allowlist.
-2. Require or derive the real hub URL for URLPattern base resolution.
-3. Land the conformance-test adaptation and update UI/docs to modern `match` / `matchURLPattern` semantics.
-
-Also address the two Minor findings for standards polish and OAuth discovery interoperability:
-
-1. Accept both `at+jwt` and `application/at+jwt` with fully case-insensitive matching.
-2. Validate `resource_identifier` as an RFC 9728 resource URL, or explicitly document any deliberate non-URL compatibility mode.
+1. Decide whether modern mode should reject non-HTTPS `resource_identifier` values instead of only warning, or explicitly document the compatibility choice.
+2. Wait for full #1273 CI visibility beyond `license/cla`, or trigger/inspect the relevant checks manually.
 
 After fixes, rerun:
 

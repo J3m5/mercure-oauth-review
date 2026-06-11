@@ -19,11 +19,19 @@ Final spec-grounded review:
 - Spec worktree: `mercure` / `spec/oauth-authz` at `a39e15e`
 - Local normative corpus: `oauth2-specs/`
 
+Follow-up after Kevin's latest commits on 2026-06-11:
+
+- Spec: `75cc92a`
+- Matchers: `fe3122e`
+- OAuth: `0a415e4`
+
 ## Blocker
 
 No blocker found.
 
 ## Major
+
+No Major finding remains open after the 2026-06-11 follow-up. The original Major findings are kept below with their resolution status.
 
 ### 1. JWKS validation can run without the explicit JWS algorithm allowlist required by the spec
 
@@ -38,6 +46,7 @@ No blocker found.
 - Proposed fix: make JWKS algorithm allowlists mandatory in modern mode. For Caddy, reject provisioning when `publisher_jwks_url` is set without `publisher_jwks_algorithms`, and similarly for subscribers. Alternatively provide a deliberately explicit default allowlist, document it, and pass it into `jwt.WithValidMethods`.
 - Expected tests: Caddy provisioning fails for JWKS without algorithms in modern mode; succeeds with algorithms; a token signed with an algorithm outside the configured list is rejected with `401 invalid_token`; compatibility behavior, if intentionally different, is covered separately.
 - Follow-up status at `edfaa64`: still open. The comment now explicitly says the JWKS path relies on per-key algorithm constraints when no allowlist is configured, and Caddy still treats `publisher_jwks_algorithms` / `subscriber_jwks_algorithms` as optional.
+- Follow-up status at `0a415e4`: resolved. `applyModernDefaults` fills `defaultJWTAlgorithms` for configured key functions without an explicit list, the default list is asymmetric-only, and `TestNewHubDefaultJWTAlgorithms` proves an HS256 token is rejected even when the key function would return the matching secret.
 
 ### 2. URLPattern matching falls back to a synthetic base instead of the hub URL when `public_url` is unset
 
@@ -54,6 +63,7 @@ No blocker found.
 - Proposed fix: make the real hub URL available to URLPattern matching in modern mode. Practical options: require `public_url` whenever URLPattern support is active, default it from a full hub `resource_identifier` when safe, or derive/store per-request base for subscriber matchers and authorization validation. Update the default Caddyfile and docs accordingly.
 - Expected tests: with no `public_url`, either startup fails with a clear error or a relative pattern is resolved against the actual hub URL. Add tests for relative pattern vs absolute topic and absolute pattern vs relative topic.
 - Follow-up status at `e781ad9` / `edfaa64`: still open. The code still falls back to `http://mercure.invalid`; comments now document that cross-mode matching requires `public_url`, but startup does not require it and no real hub URL is derived automatically.
+- Follow-up status at `0a415e4`: resolved for the reviewed modern configuration. `configureIdentifiers` derives `publicURL` and the URLPattern base from a full hub `resource_identifier` ending in `/.well-known/mercure`, and `TestNewHubDerivesPatternBaseFromResourceIdentifier` covers the behavior. A synthetic fallback still exists only when no hub URL can be derived.
 
 ### 3. Debug UI, conformance tests, and several user docs still use legacy subscribe parameters
 
@@ -73,8 +83,11 @@ No blocker found.
 - Expected tests: conformance tests use `match`/`matchURLPattern` by default and include a negative test that `topic` is rejected without compatibility. UI smoke test or unit-level DOM check verifies emitted query parameters.
 - Follow-up status at `edfaa64`: still open. `public/app.js` still appends `topicURLPattern` for subscription events, `conformance-tests/mercure.spec.ts` still selects `topic` / `topicURLPattern`, and user docs still contain modern-path examples using `topic=`.
 - Local validation note: after adapting the local `mercure/conformance-tests` worktree to emit `match` / `matchURLPattern`, update URLPattern cases, and use a modern OAuth JWT with `authorization_details`, `npm run test:e2e` produced a Playwright `.last-run.json` status of `passed` with `failedTests: []`. This validates the conformance-test remediation locally, but it does not change the upstream PR status until those changes are committed to the relevant branch.
+- Follow-up status at `0a415e4`: resolved. The local conformance adaptation is now upstream, the debug UI emits `match` / `matchURLPattern`, and the docs snippets checked in `getting-started`, `troubleshooting`, FAQ, and Hotwire use modern subscribe parameters. Remaining `topic=` occurrences in those files are publication examples or explicitly deprecated/upgrade text.
 
 ## Minor
+
+One Minor item remains partially open.
 
 ### 4. `application/at+jwt` handling is not fully case-insensitive despite the code comment
 
@@ -86,6 +99,7 @@ No blocker found.
 - Proposed fix: compare `typ` case-insensitively against both accepted values, or lowercase before trimming the prefix.
 - Expected tests: accept `typ: "application/at+jwt"` and a mixed-case prefix variant; still reject `JWT` / ID-token style values.
 - Follow-up status at `edfaa64`: still open. `Authorization: Bearer` scheme matching was fixed, but JWT `typ` still uses `strings.TrimPrefix(typ, "application/")` before `strings.EqualFold`, so `Application/at+jwt` remains rejected.
+- Follow-up status at `0a415e4`: resolved. The implementation strips the optional `application/` prefix with `strings.EqualFold`, and `TestAuthorizeAcceptsMixedCaseATJWTType` covers `Application/AT+JWT`.
 
 ### 5. `resource_identifier` is published without RFC 9728 URL validation
 
@@ -100,6 +114,7 @@ No blocker found.
 - Impact: a Caddy or Go deployment can publish metadata that strict RFC 9728 clients must ignore because `resource` is not an `https` URL, contains a fragment, or otherwise cannot be the identifier used to derive the metadata URL. The token `aud` check can still work internally, but OAuth discovery interoperability is weakened.
 - Proposed fix: validate `resource_identifier` in modern mode as an RFC 9728 resource identifier: absolute URL, `https` scheme, no fragment; preferably no query unless deliberately supported. If Mercure intentionally allows non-URL audiences for self-issued deployments, do not publish RFC 9728 metadata for that value or document a clearly labelled non-conformant compatibility mode.
 - Expected tests: `NewHub` / Caddy provisioning rejects `resource_identifier foo`, `http://...`, and `https://...#fragment` in modern token-validating mode; valid `https://hub.example.com/.well-known/mercure` succeeds and is emitted unchanged in metadata.
+- Follow-up status at `0a415e4`: partially resolved. `applyModernDefaults` now rejects non-absolute values, values without a host, and fragments, with `TestNewHubInvalidResourceIdentifier` covering `foo`, `/relative`, and `https://example.com/x#frag`. However, `http://...` is not rejected; it is published with a warning that strict RFC 9728 clients will ignore the metadata. The remaining decision is whether modern mode should reject non-HTTPS identifiers or document that compatibility choice.
 
 ## Resolved Follow-Up Items
 
@@ -125,6 +140,8 @@ These were review-adjacent gaps or CI issues observed during the initial pass an
 
 ## Question
 
+No open question remains after the 2026-06-11 follow-up. The original question is kept below with its resolution status.
+
 ### 6. Should protected resource metadata advertise supported authorization detail types?
 
 - PR: #1273
@@ -133,3 +150,4 @@ These were review-adjacent gaps or CI issues observed during the initial pass an
 - Observation: the metadata currently advertises `resource`, `bearer_methods_supported`, `authorization_servers`, and `mercure_cookie`, but not `authorization_details_types_supported: ["mercure"]`.
 - Impact: not a spec violation because this field is optional, but clients using RFC 9728 discovery cannot learn from metadata that the resource supports the `mercure` authorization details type.
 - Proposed decision: either add `authorization_details_types_supported: ["mercure"]`, or explicitly document why Mercure leaves this to AS metadata / future RFC 8414 follow-up.
+- Follow-up status at `75cc92a` / `0a415e4`: resolved. The spec advertises the field and `ProtectedResourceMetadataHandler` emits `authorization_details_types_supported: ["mercure"]`, covered by `TestProtectedResourceMetadata`.
